@@ -699,10 +699,11 @@ function Kong.init()
       kong.rpc = require("kong.clustering.rpc.manager").new(config, kong.node.get_id())
 
       if is_data_plane(config) then
-        require("kong.clustering.services.debug").init(kong.rpc)
+        require("kong.clustering.services.debug.log_level").init(kong.rpc)
+        require("kong.clustering.services.debug.session.dp").init(kong.rpc)
       end
       if is_control_plane(config) then
-        require("kong.clustering.services.observability").init(kong.rpc)
+        require("kong.clustering.services.debug.session.cp").init(kong.rpc)
       end
     end
   end
@@ -1832,6 +1833,7 @@ function Kong.log()
   runloop.log.before(ctx)
   local plugins_iterator = runloop.get_plugins_iterator()
   execute_collected_plugins_iterator(plugins_iterator, "log", ctx)
+  -- dynamic_hook.run("report_debug", "debug.report")
   plugins_iterator.release(ctx)
   runloop.log.after(ctx)
 

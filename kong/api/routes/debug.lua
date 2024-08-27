@@ -171,12 +171,20 @@ if kong.rpc then
       return kong.response.exit(204)
     end,
   }
-  routes["/clustering/data-planes/:node_id/debug-session"] = {
+  routes["/clustering/data-planes/:node_id/debug-session/start"] = {
     PUT = function(self)
-      local action = self.params.action
-      local res, err = kong.rpc:call(self.params.node_id, "kong.observability.debug-session.v1.toggle", {
-        action = action or "start",
-      })
+      local plugin_config = {}
+      plugin_config.name = "opentelemetry-shadow"
+      plugin_config.config = {
+        logs_endpoint = "kong-rpc://control-plane/logs",
+        traces_endpoint = "kong-rpc://control-plane/traces",
+        queue = {
+          max_entries = 25,
+          max_batch_size = 25,
+          max_coalescing_delay = 3,
+        }
+      }
+      local res, err = kong.db.plugins:insert(plugin_config)
       if not res then
         return kong.response.exit(500, { message = err, })
       end
@@ -184,6 +192,18 @@ if kong.rpc then
       return kong.response.exit(201)
     end,
   }
+  routes["/clustering/data-planes/:node_id/debug-session/stop"] = {
+    PUT = function(self)
+      local res, err = kong.db.plugins:delete(find_by_name)
+      -- local res, err = kong.rpc:call(self.params.node_id, "kong.debug.session.v1.start", {})
+      if not res then
+        return kong.response.exit(500, { message = err, })
+      end
+
+      return kong.response.exit(201)
+    end,
+  }
+
 end
 
 return routes
