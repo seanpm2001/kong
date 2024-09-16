@@ -29,6 +29,7 @@ local _M = {
 ---@class kong.configuration.wasm_filter.meta
 ---
 ---@field config_schema kong.db.schema.json.schema_doc|nil
+---@field metrics table|nil
 
 
 local uuid = require "kong.tools.uuid"
@@ -72,6 +73,20 @@ local FILTER_META_SCHEMA = {
   type = "object",
   properties = {
     config_schema = json_schema.metaschema,
+    metrics = {
+      type = "object",
+      properties = {
+        label_patterns = {
+          type = "array",
+          items = {
+            properties = {
+              label = { type = "string" },
+              pattern = { type = "string" },
+            }
+          }
+        }
+      }
+    }
   },
 }
 
